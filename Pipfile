@@ -4,9 +4,8 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [scripts]
-destroy = "cdk destroy"
+destroy = "cdk destroy *"
 deploy = "cdk deploy *"
-test = "python app.py"
 
 [packages]
 python-dotenv = "*"
