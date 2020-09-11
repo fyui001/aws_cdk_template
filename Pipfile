@@ -1,0 +1,32 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[scripts]
+destroy = "cdk destroy"
+deploy = "cdk deploy *"
+test = "python app.py"
+
+[packages]
+python-dotenv = "*"
+boto3 = "*"
+"aws-cdk.core" = "*"
+"aws-cdk.aws-ec2" = "*"
+"aws-cdk.aws-ecs" = "*"
+"aws-cdk.aws-elasticloadbalancingv2" = "*"
+"aws-cdk.aws-ecs-patterns" = "*"
+"aws-cdk.aws-ecr" = "*"
+"aws-cdk.aws-ecr-assets" = "*"
+"aws-cdk.aws-rds" = "*"
+"aws-cdk.aws-s3" = "*"
+"aws-cdk.aws-iam" = "*"
+"aws-cdk.aws-route53" = "*"
+"aws-cdk.aws-kms" = "*"
+"aws-cdk.aws-codepipeline-actions" = "*"
+"aws-cdk.aws-codepipeline" = "*"
+"aws-cdk.aws-codebuild" = "*"
+"aws-cdk.app-delivery" = "*"
+
+[requires]
+python_version = "3.8"
