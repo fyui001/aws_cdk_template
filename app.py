@@ -17,92 +17,33 @@ import os
 from dotenv import load_dotenv
 
 from stacks.CodepipelineStack import CodepipelineStack
+from stacks.VpcStack import VpcStack
+from stacks.RdsStack import RdsStack
 
 class AutoScalingFargateService(core.Stack):
 
     def __init__(self, scope: core.App, name: str, **kwargs) -> None:
         super().__init__(scope, name, **kwargs)
 
-        # vpc create
-        vpc = ec2.Vpc(
-            self,
-            '{project_name}-VPC'.format(project_name=os.getenv('PROJECT_NAME')),
-            max_azs=2,
-            cidr=os.getenv('AWS_VPC_CIDR'),
-        )
-
-        vpc.add_gateway_endpoint(
-            's3endpoint',
-            service=ec2.GatewayVpcEndpointAwsService.S3,
-        )
+        ## VPC Stack
+        vpc_stack = VpcStack(app, 'VpcStack')
 
         cluster = ecs.Cluster(
             self,
             'Cluster',
             cluster_name='{project_name}-ecs-cluster'.format(project_name=os.getenv('PROJECT_NAME')),
-            vpc=vpc,
+            vpc=vpc_stack.vpc,
         )
 
-        sg_db = ec2.SecurityGroup(
-            self,
-            'RDSSG',
-            vpc=vpc,
-            allow_all_outbound=True,
-            description='Allow DS access Security Group'
-        )
-        sg_db.add_ingress_rule(
-            peer=ec2.Peer.ipv4('182.171.74.66/32'),
-            connection = ec2.Port.tcp(int(os.getenv('DB_PORT'))),
-            description='Allow MySQL access from Dimageshare'
-        )
-        sg_db.add_ingress_rule(
-            peer = ec2.Peer.ipv4(vpc.vpc_cidr_block),
-            connection = ec2.Port.tcp(int(os.getenv('DB_PORT'))),
-            description='Allow MySQL access from ECS'
-        )
+        ## RDS Stack
+        rds_stack = RdsStack(app, 'RdsStack', vpc_stack.vpc, vpc_stack.rds_sg)
 
-        '''key_db = kms.Key.from_key_arn(
-            self,
-            'key_db',
-            key_arn='arn:aws:kms:ap-northeast-1:170013962578:key/9b4d3b78-0b37-4f84-a086-983634575975'
-        )'''
-
-        mysql = rds.DatabaseInstance(
-            self,
-            '{project_name}-RDS'.format(project_name=os.getenv('PROJECT_NAME')),
-            master_username=os.getenv('DB_USERNAME'),
-            master_user_password=core.SecretValue.plain_text(os.getenv('DB_PASSWORD')),
-            database_name=os.getenv('DB_DATABASE'),
-            engine=rds.DatabaseInstanceEngine.MYSQL,
-            vpc=vpc,
-            ## public accessibility　パブリックアクセシビリティをyesにする設定値がないためvpc_lacementで設定
-            ## public ip attached　RDSにパブリックIPを付与する設定
-            vpc_placement={
-                'subnet_type': ec2.SubnetType.PUBLIC
-            },
-            port=int(os.getenv('DB_PORT')),
-            instance_identifier='{project_name}-MYSQL'.format(project_name=os.getenv('PROJECT_NAME')),
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE2, ec2.InstanceSize.MICRO),
-            removal_policy=core.RemovalPolicy.DESTROY,
-            deletion_protection=False,
-            cloudwatch_logs_exports=['error', 'general', 'slowquery'],
-        )
-
-        mysql.connections.allow_from(
-            sg_db,
-            port_range = ec2.Port.tcp(int(os.getenv('DB_PORT'))),
-            description = 'Allow MySQL access from Query Lambda (because Aurora actually exposes PostgreSQL/MySQL on port 3306)'
-        )
-
-        ### コードビルドstack ###
-        print(mysql.db_instance_endpoint_address)
+        #@ Codepipeline Stack
         CodepipelineStack(
-            scope,
+            app,
             id = 'CodepipelineStack',
-            rds_endpoint = mysql.db_instance_endpoint_address
+            rds_endpoint = rds_stack.mysql.db_instance_endpoint_address
         )
-
-        ########################
 
         # ECS role attach
         ecs_principle = iam.ServicePrincipal('ecs-tasks.amazonaws.com')
@@ -334,7 +275,7 @@ class AutoScalingFargateService(core.Stack):
 
         # api
         api_fargate_service.service.connections.security_groups[0].add_ingress_rule(
-            peer = ec2.Peer.ipv4(vpc.vpc_cidr_block),
+            peer = ec2.Peer.ipv4(vpc_stack.vpc.vpc_cidr_block),
             connection = ec2.Port.tcp(9000),
             description='Allow 9000 inbound from SG'
         )
@@ -390,7 +331,7 @@ class AutoScalingFargateService(core.Stack):
             self,
             'ECS_TASK_VPC_SUBNET_1',
             parameter_name='ECS_TASK_VPC_SUBNET_1',
-            string_value=vpc.public_subnets[0].subnet_id
+            string_value=vpc_stack.vpc.public_subnets[0].subnet_id
         )
 
         # core.CfnOutput(self, 'ECR', value=ecr.Repository)
@@ -413,21 +354,19 @@ class AutoScalingFargateService(core.Stack):
 
 
 
-def main():
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    dotenv_path = os.path.join(base_path, '.env')
-    load_dotenv(dotenv_path)
+base_path = os.path.dirname(os.path.abspath(__file__))
+dotenv_path = os.path.join(base_path, '.env')
+load_dotenv(dotenv_path)
 
-    app = core.App()
-    AutoScalingFargateService(
-        app,
-        os.getenv('PROJECT_NAME'),
-        env = {
-            "region": os.getenv('AWS_DEFAULT_REGION'),
-            "account": os.getenv('AWS_ACCOUNT_ID'),
-        }
-    )
-    app.synth()
+app = core.App()
 
-if __name__ == '__main__':
-    main()
+AutoScalingFargateService(
+    app,
+    os.getenv('PROJECT_NAME'),
+    env = {
+        'region': os.getenv('AWS_DEFAULT_REGION'),
+        'account': os.getenv('AWS_ACCOUNT_ID'),
+    }
+)
+
+app.synth()
