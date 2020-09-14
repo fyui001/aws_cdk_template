@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 class RdsStack(core.Stack):
 
-    def __init__(self, scope: core.Construct, id: str, vpc: ec2.Vpc, security_group: ec2.SecurityGroup, **kwargs):
+    def __init__(self, scope: core.Construct, id: str, vpc: ec2.Vpc, security_group: ec2.SecurityGroup, **kwargs) -> None:
 
         super().__init__(scope, id, **kwargs)
 
