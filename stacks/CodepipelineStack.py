@@ -11,33 +11,33 @@ from dotenv import load_dotenv
 
 class CodepipelineStack(core.Stack):
 
-    def __init__(self, scope: core.Construct, id: str, rds_endpoint: str, **kwargs) -> None:
+    def __init__(self, scope: core.Construct, id: str, rds_endpoint: str, secret_manager: str, application_name: str, repo: str,  **kwargs) -> None:
 
         super().__init__(scope, id, **kwargs)
-        print(rds_endpoint)
+
         pipeline = codepipeline.Pipeline(
             self,
-            id=os.getenv('API_APPLICATION_NAMESPACE'),
-            pipeline_name=os.getenv('API_APPLICATION_NAMESPACE'),
+            id = application_name,
+            pipeline_name = application_name,
         )
 
         app_output = codepipeline.Artifact()
         git_hub_token = os.getenv('GIT_HUB_TOKEN')
         # SourceActionの諸々定義
         source_action = actions.GitHubSourceAction(
-            action_name='SourceAction',
-            oauth_token=core.SecretValue.plain_text(git_hub_token),
-            owner=os.getenv('GIT_HUB_ACCOUNT'),
-            repo=os.getenv('GIT_HUB_REPOSITORY'),
-            branch=os.getenv('GIT_HUB_BRUNCH'),
-            output=app_output,
-            run_order=1
+            action_name = 'SourceAction',
+            oauth_token = core.SecretValue.plain_text(git_hub_token),
+            owner = os.getenv('GIT_HUB_ACCOUNT'),
+            repo = repo,
+            branch = os.getenv('GIT_HUB_BRUNCH'),
+            output = app_output,
+            run_order = 1
         )
 
         # BuildActionの定義
         build_action = codebuild.PipelineProject(
             self,
-            id = '{project_name}BuildAction'.format(project_name=os.getenv('PROJECT_NAME')),
+            id = '{action_name}BuildActionProject'.format(action_name=application_name),
             environment = codebuild.BuildEnvironment(
                 privileged = True
             ),
@@ -60,13 +60,13 @@ class CodepipelineStack(core.Stack):
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
                     'value': str(os.getenv('DB_USERNAME')),
                 },
-                os.getenv('AWS_SECRET_MANAGER'): {
+                secret_manager: {
                     'type': codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                    'value': str(os.getenv('AWS_SECRET_MANAGER')),
+                    'value': str(secret_manager),
                 },
                 'PROJECT_NAMESPACE': {
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
-                    'value': str(os.getenv('PROJECT_NAME')),
+                    'value': application_name,
                 },
                 'AWS_DEFAULT_REGION': {
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
@@ -76,21 +76,28 @@ class CodepipelineStack(core.Stack):
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
                     'value': str(os.getenv('ENVIRONMENT')),
                  },
-            }
+            },
         )
 
         build_action.add_to_role_policy(iam.PolicyStatement(
-            actions = ['service:BuildAction'],
-            resources = [
-                'arn:aws:iam::aws:policy/SecretsManagerReadWrite',
-                'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess',
-            ]
+            resources = ['*'],
+            actions = [
+                'ecr:*',
+                'cloudtrail:LookupEvents'
+            ],
+        ))
+
+        build_action.add_to_role_policy(iam.PolicyStatement(
+            resources = ['*'],
+            actions = [
+                'secretsmanager:*'
+            ],
         ))
 
         application_deploy_action = actions.CodeBuildAction(
             project = build_action,
             input = app_output,
-            action_name = 'BuildAction',
+            action_name = 'CodeBuildAction',
             run_order = 3
         )
 
