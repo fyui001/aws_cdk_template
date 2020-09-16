@@ -4,7 +4,6 @@ __pycache__
 .pytest_cache
 .env
 *.egg-info
-docker-compose.yml
 
 # CDK asset staging directory
 .cdk.staging
