@@ -7,7 +7,6 @@ from aws_cdk import (
 )
 
 import os
-from dotenv import load_dotenv
 
 class CodepipelineStack(core.Stack):
 
@@ -46,11 +45,11 @@ class CodepipelineStack(core.Stack):
             environment_variables = {
                 'DB_HOST': {
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
-                    'value': str(os.getenv('DB_HOST')),
+                    'value': rds_endpoint,
                 },
                 'DB_PORT': {
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
-                    'value': rds_endpoint,
+                    'value': os.getenv('DB_PORT'),
                 },
                 'DB_DATABASE': {
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
