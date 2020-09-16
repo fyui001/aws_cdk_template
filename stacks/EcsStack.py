@@ -8,7 +8,6 @@ from aws_cdk import (
 )
 
 import os
-from dotenv import load_dotenv
 
 class EcsStack(core.Stack):
 
@@ -53,18 +52,18 @@ class EcsStack(core.Stack):
 
         self.web_ecs_logs = ecs.LogDriver.aws_logs(
             log_group = self.log_group,
-            stream_prefix = '{name_space}-web'.format(name_space=os.getenv('API_APPLICATION_NAMESPACE'))
+            stream_prefix = '{name_space}-web'.format(name_space=application_name)
         )
 
         self.app_ecs_logs = ecs.LogDriver.aws_logs(
             log_group = self.log_group,
-            stream_prefix = '{name_space}-app'.format(name_space=os.getenv('API_APPLICATION_NAMESPACE'))
+            stream_prefix = '{name_space}-app'.format(name_space=application_name)
         )
 
         ## task definitions
         self.taskdef = ecs.FargateTaskDefinition(
             self,
-            '{name_space}_task'.format(name_space=os.getenv('API_APPLICATION_NAMESPACE')),
+            '{name_space}_task'.format(name_space=application_name),
             execution_role = self.execution_role,
             task_role = self.task_role,
         )
@@ -77,7 +76,7 @@ class EcsStack(core.Stack):
             image = ecs.ContainerImage.from_registry(
                 '{account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/{name_space}/web'.format(
                     account_id = os.getenv('AWS_ACCOUNT_ID'),
-                    name_space = os.getenv('API_APPLICATION_NAMESPACE')
+                    name_space = application_name
                 )
             )
         ).add_port_mappings(
@@ -95,7 +94,7 @@ class EcsStack(core.Stack):
             image = ecs.ContainerImage.from_registry(
                 '{account_id}.dkr.ecr.ap-northeast-1.amazonaws.com/{name_space}/app'.format(
                     account_id = os.getenv('AWS_ACCOUNT_ID'),
-                    name_space = os.getenv('API_APPLICATION_NAMESPACE')
+                    name_space = application_name
                 )
             )
         ).add_port_mappings(
@@ -108,7 +107,7 @@ class EcsStack(core.Stack):
         ## service
         self.fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
-            os.getenv('API_APPLICATION_NAMESPACE'),
+            application_name,
             cluster = cluster,
             cpu = 1024, # 1 CPU
             memory_limit_mib = 2048, # 2GB RAM
