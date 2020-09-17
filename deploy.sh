@@ -1,0 +1,9 @@
+cdk deploy $PROJECT_NAME
+cdk deploy AdminEcrStack
+cdk deploy ApiEcrStack
+cdk deploy VpcStack
+cdk deploy RdsStack
+cdk deploy AdminCodepipelineStack
+cdk deploy ApiCodepipelineStack
+cdk deploy AdminEcsStack
+cdk deploy ApiEcsStack

@@ -21,8 +21,6 @@ class RdsStack(core.Stack):
             database_name = os.getenv('DB_DATABASE'),
             engine = rds.DatabaseInstanceEngine.MYSQL,
             vpc = vpc,
-            ## public accessibility　パブリックアクセシビリティをyesにする設定値がないためvpc_lacementで設定
-            ## public ip attached　RDSにパブリックIPを付与する設定
             vpc_placement = {
                 'subnet_type': ec2.SubnetType.PUBLIC
             },
