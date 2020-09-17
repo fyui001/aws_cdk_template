@@ -1,58 +1,37 @@
+# セットアップ
 
-# Welcome to your CDK Python project!
+.env.exampleをコピーして各環境に合うように適宜書き換える。
 
-This is a blank project for Python development with CDK.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the .env
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
-
-To manually create a virtualenv on MacOS and Linux:
-
-```
-$ python3 -m venv .env
+```shell script
+cp .env.example .env
 ```
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+# デプロイ環境の立ち上げ
 
-```
-$ source .env/bin/activate
-```
+docker-compose.ymlは必要がなければ書き換える必要なし。
 
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .env\Scripts\activate.bat
+```shell script
+docker-compose up -d
 ```
 
-Once the virtualenv is activated, you can install the required dependencies.
+# デプロイ
 
+コンテナ内でdeploy.shを実行させ、CDKのデプロイを実行する。
+
+デプロイするStackを指定したい時、Stack名を変えたときはdeploy.shを適宜書き換える。
+
+※初期内容は全Stackを個別にデプロイしている。
+
+```shell script
+docker-compose exec aws-cdk sh -c 'sh deploy.sh' 
 ```
-$ pip install -r requirements.txt
+
+# デストロイ
+
+コンテナ内でdeploy.shを実行させ、CDKのデストロイを実行する。
+
+deploy.shの初期内容は全Stackをデストロイする仕様になっているので、必要に応じて書き換える。
+
+```shell script
+docker-compose exec aws-cdk sh -c 'sh destroy.sh'
 ```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
-```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
-
-## Useful commands
-
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
-
-Enjoy!
