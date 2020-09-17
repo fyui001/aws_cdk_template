@@ -125,7 +125,7 @@ class EcsStack(core.Stack):
         )
         # Setup AutoScaling policy
         # memory utilization setup
-        self.scaling =self.fargate_service.service.auto_scale_task_count(
+        self.scaling = self.fargate_service.service.auto_scale_task_count(
             min_capacity = 1,
             max_capacity = 10
         )
@@ -137,7 +137,7 @@ class EcsStack(core.Stack):
         )
         self.scaling.scale_on_memory_utilization(
             'MemoryScaling',
-            target_utilization_percent =80,
+            target_utilization_percent = 80,
             scale_in_cooldown = core.Duration.seconds(60),
             scale_out_cooldown = core.Duration.seconds(60),
         )

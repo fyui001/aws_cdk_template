@@ -8,6 +8,6 @@ RUN apk add --update-cache --no-cache npm
 
 RUN npm install -g aws-cdk && \
     pip install pipenv && \
-    pipenv install
+    pipenv install --system
 
 CMD ["/bin/ash"]
