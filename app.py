@@ -38,6 +38,13 @@ class AutoScalingFargateService(core.Stack):
         ## RDS Stack
         rds_stack = RdsStack(app, 'RdsStack', vpc_stack.vpc, vpc_stack.rds_sg)
 
+        ## S3 bucket create
+        s3_bucket = s3.Bucket(
+            self,
+            '{project_name}-S3bucket'.format(project_name=os.getenv('PROJECT_NAME')),
+            bucket_name = '{prefix}-bucket'.format(prefix=os.getenv('AWS_BUCKET_PLEFIX'))
+        )
+
         ## Codepipeline Stack
 
         # admin
@@ -47,7 +54,8 @@ class AutoScalingFargateService(core.Stack):
             rds_endpoint = rds_stack.mysql.db_instance_endpoint_address,
             secret_manager = os.getenv('ADMIN_SECRET_MANAGER'),
             application_name = os.getenv('ADMIN_APPLICATION_NAMESPACE'),
-            repo = os.getenv('ADMIN_GIT_HUB_REPOSITORY')
+            repo = os.getenv('ADMIN_GIT_HUB_REPOSITORY'),
+            s3_bucket_name = s3_bucket.bucket_name
         )
 
         # api
@@ -57,16 +65,20 @@ class AutoScalingFargateService(core.Stack):
             rds_endpoint = rds_stack.mysql.db_instance_endpoint_address,
             secret_manager = os.getenv('API_SECRET_MANAGER'),
             application_name = os.getenv('API_APPLICATION_NAMESPACE'),
-            repo = os.getenv('API_GIT_HUB_REPOSITORY')
+            repo = os.getenv('API_GIT_HUB_REPOSITORY'),
+            s3_bucket_name = s3_bucket.bucket_name
         )
 
         ## ECS Cluster
         cluster = ecs.Cluster(
             self,
             'ClusterStack',
-            cluster_name = '{project_name}-ecs-cluster'.format(project_name=os.getenv('PROJECT_NAME'))
+            cluster_name = '{project_name}-ecs-cluster'.format(project_name=os.getenv('PROJECT_NAME')),
+            vpc = vpc_stack.vpc
         )
 
+        ## ECS Stack
+        # admin
         EcsStack(
             app,
             id = 'AdminEcsStack',
@@ -75,6 +87,7 @@ class AutoScalingFargateService(core.Stack):
             application_name = os.getenv('ADMIN_APPLICATION_NAMESPACE')
         )
 
+        # api
         EcsStack(
             app,
             id = 'ApiEcsStack',

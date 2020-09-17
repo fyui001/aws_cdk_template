@@ -10,7 +10,7 @@ import os
 
 class CodepipelineStack(core.Stack):
 
-    def __init__(self, scope: core.Construct, id: str, rds_endpoint: str, secret_manager: str, application_name: str, repo: str,  **kwargs) -> None:
+    def __init__(self, scope: core.Construct, id: str, rds_endpoint: str, secret_manager: str, application_name: str, repo: str, s3_bucket_name: str,  **kwargs) -> None:
 
         super().__init__(scope, id, **kwargs)
 
@@ -70,6 +70,10 @@ class CodepipelineStack(core.Stack):
                 'AWS_DEFAULT_REGION': {
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
                     'value': str(os.getenv('AWS_DEFAULT_REGION')),
+                },
+                'AWS_BUCKET': {
+                    'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+                    'value': s3_bucket_name
                 },
                 'ENVIRONMENT': {
                     'type': codebuild.BuildEnvironmentVariableType.PLAINTEXT,
