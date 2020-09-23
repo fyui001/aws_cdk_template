@@ -40,6 +40,18 @@ class VpcStack(core.Stack):
         )
 
         self.rds_sg.add_ingress_rule(
+            peer = ec2.Peer.ipv4('14.177.64.134/32'),
+            connection = ec2.Port.tcp(int(os.getenv('DB_PORT'))),
+            description = 'Allow MySQL access from Dimageshare'
+        )
+
+        self.rds_sg.add_ingress_rule(
+            peer = ec2.Peer.ipv4('182.171.83.178/32'),
+            connection = ec2.Port.tcp(int(os.getenv('DB_PORT'))),
+            description = 'Allow MySQL access from Dimageshare'
+        )
+
+        self.rds_sg.add_ingress_rule(
             peer = ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection = ec2.Port.tcp(int(os.getenv('DB_PORT'))),
             description = 'Allow MySQL access from ECS'
