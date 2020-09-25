@@ -42,7 +42,7 @@ class AutoScalingFargateService(core.Stack):
         s3_bucket = s3.Bucket(
             self,
             '{project_name}-S3bucket'.format(project_name=os.getenv('PROJECT_NAME')),
-            bucket_name = '{prefix}-bucket'.format(prefix=os.getenv('AWS_BUCKET_PLEFIX'))
+            bucket_name = '{prefix}-bucket'.format(prefix=os.getenv('AWS_BUCKET_PREFIX'))
         )
 
         ## Codepipeline Stack
